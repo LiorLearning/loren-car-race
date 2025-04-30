@@ -8,21 +8,32 @@ export function setupControls(gameState) {
     // Keyboard controls - keydown
     window.addEventListener('keydown', (e) => {
         switch(e.key) {
-            case 'w':
+            // Arrow keys for red car
             case 'ArrowUp':
                 gameState.moveForward = true;
                 break;
-            case 's':
             case 'ArrowDown':
                 gameState.moveBackward = true;
                 break;
-            case 'a':
             case 'ArrowLeft':
                 gameState.turnLeft = true;
                 break;
-            case 'd':
             case 'ArrowRight':
                 gameState.turnRight = true;
+                break;
+            
+            // WASD for blue car
+            case 'w':
+                gameState.blueMoveForward = true;
+                break;
+            case 's':
+                gameState.blueMoveBackward = true;
+                break;
+            case 'a':
+                gameState.blueTurnLeft = true;
+                break;
+            case 'd':
+                gameState.blueTurnRight = true;
                 break;
         }
     });
@@ -30,21 +41,32 @@ export function setupControls(gameState) {
     // Keyboard controls - keyup
     window.addEventListener('keyup', (e) => {
         switch(e.key) {
-            case 'w':
+            // Arrow keys for red car
             case 'ArrowUp':
                 gameState.moveForward = false;
                 break;
-            case 's':
             case 'ArrowDown':
                 gameState.moveBackward = false;
                 break;
-            case 'a':
             case 'ArrowLeft':
                 gameState.turnLeft = false;
                 break;
-            case 'd':
             case 'ArrowRight':
                 gameState.turnRight = false;
+                break;
+            
+            // WASD for blue car
+            case 'w':
+                gameState.blueMoveForward = false;
+                break;
+            case 's':
+                gameState.blueMoveBackward = false;
+                break;
+            case 'a':
+                gameState.blueTurnLeft = false;
+                break;
+            case 'd':
+                gameState.blueTurnRight = false;
                 break;
         }
     });
@@ -57,9 +79,16 @@ export function setupControls(gameState) {
  */
 export function getControlState(gameState) {
     return {
+        // Red car controls
         moveForward: gameState.moveForward,
         moveBackward: gameState.moveBackward,
         turnLeft: gameState.turnLeft,
-        turnRight: gameState.turnRight
+        turnRight: gameState.turnRight,
+        
+        // Blue car controls
+        blueMoveForward: gameState.blueMoveForward,
+        blueMoveBackward: gameState.blueMoveBackward,
+        blueTurnLeft: gameState.blueTurnLeft,
+        blueTurnRight: gameState.blueTurnRight
     };
 } 

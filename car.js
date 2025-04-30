@@ -30,6 +30,35 @@ export function createCar(scene) {
 }
 
 /**
+ * Creates and configures a blue car with all its parts
+ * @param {BABYLON.Scene} scene - The Babylon.js scene
+ * @returns {BABYLON.Mesh} The created car mesh
+ */
+export function createBlueCar(scene) {
+    // Create main car body
+    const car = BABYLON.MeshBuilder.CreateBox('blueCar', {width: 2, height: 1, depth: 4}, scene);
+    car.position.y = 0.5;
+    car.position.x = 2; // Position slightly to the right of the first car
+    car.position.z = -20;
+    
+    // Create car material
+    const carMaterial = new BABYLON.StandardMaterial('blueCarMat', scene);
+    carMaterial.diffuseColor = new BABYLON.Color3(0, 0.5, 1); // Blue
+    car.material = carMaterial;
+
+    // Add car front indicator
+    addBlueCarFront(car, scene);
+    
+    // Add wheels to the car
+    addWheels(car, scene);
+    
+    // Set forward direction properly (Z-axis is forward in our case)
+    car.frontVector = new BABYLON.Vector3(0, 0, 1);
+    
+    return car;
+}
+
+/**
  * Adds the front part of the car
  * @param {BABYLON.Mesh} carMesh - The parent car mesh
  * @param {BABYLON.Scene} scene - The Babylon.js scene
@@ -55,6 +84,40 @@ function addCarFront(carMesh, scene) {
     carNose.rotation.x = Math.PI/2; // Rotate to point forward
     
     const carNoseMaterial = new BABYLON.StandardMaterial('carNoseMat', scene);
+    carNoseMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0); // Yellow nose for visibility
+    carNose.material = carNoseMaterial;
+    
+    // Parent to car
+    carFront.parent = carMesh;
+    carNose.parent = carMesh;
+}
+
+/**
+ * Adds the front part of the blue car
+ * @param {BABYLON.Mesh} carMesh - The parent car mesh
+ * @param {BABYLON.Scene} scene - The Babylon.js scene
+ */
+function addBlueCarFront(carMesh, scene) {
+    // Create a more prominent front to help player orientation
+    const carFront = BABYLON.MeshBuilder.CreateBox('blueCarFront', {width: 1.8, height: 0.5, depth: 0.7}, scene);
+    carFront.position.z = 2; // Position further forward to be more visible
+    carFront.position.y = 0.5; // Align with car body height
+    
+    const carFrontMaterial = new BABYLON.StandardMaterial('blueCarFrontMat', scene);
+    carFrontMaterial.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1); // Dark front
+    carFront.material = carFrontMaterial;
+    
+    // Add a distinctive nose/pointer to clearly indicate forward direction
+    const carNose = BABYLON.MeshBuilder.CreateCylinder('blueCarNose', {
+        height: 0.6,
+        diameter: 0.4,
+        diameterTop: 0.1
+    }, scene);
+    carNose.position.z = 2.5; // Position at the very front
+    carNose.position.y = 0.5;
+    carNose.rotation.x = Math.PI/2; // Rotate to point forward
+    
+    const carNoseMaterial = new BABYLON.StandardMaterial('blueCarNoseMat', scene);
     carNoseMaterial.diffuseColor = new BABYLON.Color3(1, 1, 0); // Yellow nose for visibility
     carNose.material = carNoseMaterial;
     

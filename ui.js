@@ -60,14 +60,15 @@ export function setupUI(gameState) {
     speedDisplay.id = 'speedDisplay';
     speedDisplay.style.marginBottom = '10px';
     speedDisplay.style.fontSize = '16px';
-    speedDisplay.textContent = 'Speed: 0 km/h';
+    speedDisplay.innerHTML = `<div style="color: #ff5555">Red Car Speed: 0 km/h</div>
+                            <div style="color: #5555ff">Blue Car Speed: 0 km/h</div>`;
     raceInfoPanel.appendChild(speedDisplay);
     
     // Terrain information display
     const terrainInfo = document.createElement('div');
     terrainInfo.id = 'terrainInfo';
     terrainInfo.style.fontSize = '16px';
-    terrainInfo.textContent = 'Terrain: Track';
+    terrainInfo.textContent = 'Red Car: Track';
     raceInfoPanel.appendChild(terrainInfo);
     
     // Checkpoint progress
@@ -92,11 +93,19 @@ export function setupUI(gameState) {
     instructions.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
     instructions.innerHTML = `
         <h3 style="margin-top: 0; text-align: center; color: #ffcc00;">CONTROLS</h3>
+        <div style="display: grid; grid-template-columns: auto auto; gap: 5px; margin-bottom: 10px;">
+            <div style="grid-column: span 2; text-align: center; color: #ff5555; font-weight: bold; margin-bottom: 5px;">Red Car (Arrow Keys)</div>
+            <div>↑ Up Arrow:</div><div>Accelerate</div>
+            <div>↓ Down Arrow:</div><div>Brake/Reverse</div>
+            <div>← Left Arrow:</div><div>Turn Left</div>
+            <div>→ Right Arrow:</div><div>Turn Right</div>
+        </div>
         <div style="display: grid; grid-template-columns: auto auto; gap: 5px;">
-            <div>W/Up Arrow:</div><div>Accelerate</div>
-            <div>S/Down Arrow:</div><div>Brake/Reverse</div>
-            <div>A/Left Arrow:</div><div>Turn Left</div>
-            <div>D/Right Arrow:</div><div>Turn Right</div>
+            <div style="grid-column: span 2; text-align: center; color: #5555ff; font-weight: bold; margin-bottom: 5px;">Blue Car (WASD)</div>
+            <div>W:</div><div>Accelerate</div>
+            <div>S:</div><div>Brake/Reverse</div>
+            <div>A:</div><div>Turn Left</div>
+            <div>D:</div><div>Turn Right</div>
         </div>
         <div style="margin-top: 10px; font-style: italic;">Stay on the track for full speed!</div>
     `;
@@ -142,11 +151,14 @@ export function updateLapTimer(lapTimeDisplay, message) {
 /**
  * Updates the speed display
  * @param {HTMLElement} speedDisplay - The speed display element
- * @param {number} speed - The current speed value
+ * @param {number} redCarSpeed - The red car speed value
+ * @param {number} blueCarSpeed - The blue car speed value
  */
-export function updateSpeedDisplay(speedDisplay, speed) {
-    const speedKmh = Math.abs(Math.round(speed * 20)); // Convert to km/h with scaling
-    speedDisplay.textContent = `Speed: ${speedKmh} km/h`;
+export function updateSpeedDisplay(speedDisplay, redCarSpeed, blueCarSpeed) {
+    const redSpeedKmh = Math.abs(Math.round(redCarSpeed * 20)); // Convert to km/h with scaling
+    const blueSpeedKmh = Math.abs(Math.round(blueCarSpeed * 20)); // Convert to km/h with scaling
+    speedDisplay.innerHTML = `<div style="color: #ff5555">Red Car Speed: ${redSpeedKmh} km/h</div>
+                            <div style="color: #5555ff">Blue Car Speed: ${blueSpeedKmh} km/h</div>`;
 }
 
 /**

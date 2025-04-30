@@ -1,8 +1,8 @@
 // Main entry point for the racing game
 
 // Import modules
-import { setupCamera } from './camera.js';
-import { createCar } from './car.js';
+import { setupCamera, setupSplitScreenCameras } from './camera.js';
+import { createCar, createBlueCar } from './car.js';
 import { createTrack, createEnvironment, isCarOnGrass } from './track.js';
 import { setupUI, updateSpeedDisplay, updateCheckpointProgress, showVictoryBanner, hideVictoryBanner } from './ui.js';
 import { setupControls } from './controls.js';
@@ -11,6 +11,7 @@ import { initializePhysics, updatePhysics } from './physics.js';
 // Global game state
 const gameState = {
     car: null,
+    blueCar: null,
     scene: null,
     finished: false,
     startTime: null,
@@ -21,14 +22,21 @@ const gameState = {
     leftGrassMesh: null,
     rightGrassMesh: null,
     isOnGrass: false,
+    blueIsOnGrass: false,
     carSpeed: 0,
+    blueCarSpeed: 0,
     moveForward: false,
     moveBackward: false,
     turnLeft: false,
     turnRight: false,
+    blueMoveForward: false,
+    blueMoveBackward: false,
+    blueTurnLeft: false,
+    blueTurnRight: false,
     trackPath: null,
     lastCheckpointTime: null,
-    ui: null
+    ui: null,
+    cameras: null
 };
 
 // Initialize Babylon.js engine
@@ -47,11 +55,12 @@ const createScene = function() {
     // Create environment (lights, ground)
     createEnvironment(scene);
     
-    // Create car
+    // Create cars
     gameState.car = createCar(scene);
+    gameState.blueCar = createBlueCar(scene);
     
-    // Setup camera
-    setupCamera(scene, gameState.car);
+    // Setup split-screen cameras
+    gameState.cameras = setupSplitScreenCameras(scene, gameState.car, gameState.blueCar);
     
     // Create track with checkpoints and finish line
     const { trackPath, trackMesh, leftGrassMesh, rightGrassMesh, checkpoints, startLineCollision } = createTrack(scene, gameState.car);
@@ -65,16 +74,21 @@ const createScene = function() {
     // Initialize the passedCheckpoints array based on the number of checkpoints
     gameState.passedCheckpoints = Array(checkpoints.length).fill(false);
     
-    // Position car at the start of the track
+    // Position cars at the start of the track
     const startPos = trackPath[0];
     gameState.car.position.x = startPos.x;
     gameState.car.position.z = startPos.z;
     
-    // Get direction from first track segment to position car correctly
+    // Position blue car slightly offset
+    gameState.blueCar.position.x = startPos.x + 2;
+    gameState.blueCar.position.z = startPos.z;
+    
+    // Get direction from first track segment to position cars correctly
     const nextPos = trackPath[1];
     const direction = nextPos.subtract(startPos);
     const angle = Math.atan2(direction.x, direction.z); // Fix angle calculation for proper orientation
     gameState.car.rotation.y = angle; // Correctly orient car to face track direction
+    gameState.blueCar.rotation.y = angle; // Same orientation for blue car
     
     // Initialize physics
     initializePhysics(gameState);
@@ -87,23 +101,26 @@ const createScene = function() {
         // Update physics and movement
         updatePhysics(gameState);
         
-        // Check if car is on grass
+        // Check if red car is on grass
         gameState.isOnGrass = isCarOnGrass(gameState.car, gameState.trackMesh, gameState.leftGrassMesh, gameState.rightGrassMesh);
         
-        // Update UI with terrain info
+        // Check if blue car is on grass
+        gameState.blueIsOnGrass = isCarOnGrass(gameState.blueCar, gameState.trackMesh, gameState.leftGrassMesh, gameState.rightGrassMesh);
+        
+        // Update UI with terrain info (display red car's terrain)
         if (gameState.isOnGrass) {
-            gameState.ui.terrainInfo.textContent = 'Terrain: Grass (Slower)';
+            gameState.ui.terrainInfo.textContent = 'Red Car: Grass (Slower)';
         } else {
-            gameState.ui.terrainInfo.textContent = 'Terrain: Track';
+            gameState.ui.terrainInfo.textContent = 'Red Car: Track';
         }
         
-        // Update speed display
-        updateSpeedDisplay(gameState.ui.speedDisplay, gameState.carSpeed);
+        // Update speed display with both cars' speeds
+        updateSpeedDisplay(gameState.ui.speedDisplay, gameState.carSpeed, gameState.blueCarSpeed);
         
         // Update checkpoint progress
         updateCheckpointProgress(gameState.ui.checkpointProgress, gameState.passedCheckpoints);
         
-        // Check for crossing checkpoints
+        // Check for crossing checkpoints (only check red car for simplicity)
         checkpoints.forEach((checkpoint, i) => {
             if (gameState.car.intersectsMesh(checkpoint, false) && 
                 !gameState.passedCheckpoints[i] && 
@@ -125,7 +142,7 @@ const createScene = function() {
             }
         });
         
-        // Check for crossing start line
+        // Check for crossing start line (only check red car for race completion)
         if (gameState.car.intersectsMesh(startLineCollision, false)) {
             if (!gameState.startTime && !gameState.finished) {
                 // First crossing: start the timer
@@ -189,23 +206,33 @@ function resetRace() {
     // Hide victory banner if visible
     hideVictoryBanner(gameState.ui.victoryBanner);
     
-    // Reset car position to start
+    // Reset red car position to start
     const startPos = gameState.trackPath[0];
     gameState.car.position.x = startPos.x;
     gameState.car.position.z = startPos.z;
     
-    // Reset car rotation
+    // Reset blue car position to start (slightly offset)
+    gameState.blueCar.position.x = startPos.x + 2;
+    gameState.blueCar.position.z = startPos.z;
+    
+    // Reset car rotations
     const nextPos = gameState.trackPath[1];
     const direction = nextPos.subtract(startPos);
     const angle = Math.atan2(direction.x, direction.z); // Fix angle calculation
-    gameState.car.rotation.y = angle; // Correctly orient car
+    gameState.car.rotation.y = angle; // Correctly orient red car
+    gameState.blueCar.rotation.y = angle; // Correctly orient blue car
     
-    // Reset car speed to zero and stop all movement
+    // Reset car speeds to zero and stop all movement
     gameState.carSpeed = 0;
+    gameState.blueCarSpeed = 0;
     gameState.moveForward = false;
     gameState.moveBackward = false;
     gameState.turnLeft = false;
     gameState.turnRight = false;
+    gameState.blueMoveForward = false;
+    gameState.blueMoveBackward = false;
+    gameState.blueTurnLeft = false;
+    gameState.blueTurnRight = false;
     
     // Reset game state
     gameState.finished = false;
@@ -213,6 +240,11 @@ function resetRace() {
     gameState.lastCheckpointTime = null;
     gameState.passedCheckpoints = Array(gameState.checkpoints.length).fill(false);
     gameState.ui.lapTimeDisplay.textContent = 'Cross the start line to begin!';
+    
+    // Update UI displays
+    updateSpeedDisplay(gameState.ui.speedDisplay, gameState.carSpeed, gameState.blueCarSpeed);
+    gameState.ui.terrainInfo.textContent = 'Red Car: Track';
+    updateCheckpointProgress(gameState.ui.checkpointProgress, gameState.passedCheckpoints);
     
     // Flash the race info panel to indicate restart
     const raceInfoPanel = document.getElementById('raceInfoPanel');
