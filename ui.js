@@ -129,13 +129,64 @@ export function setupUI(gameState) {
     victoryBanner.style.border = '3px solid gold';
     uiContainer.appendChild(victoryBanner);
     
+    // Create audio control button
+    const audioControl = document.createElement('div');
+    audioControl.id = 'audioControl';
+    audioControl.style.position = 'absolute';
+    audioControl.style.top = '20px';
+    audioControl.style.right = '20px';
+    audioControl.style.width = '40px';
+    audioControl.style.height = '40px';
+    audioControl.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    audioControl.style.color = 'white';
+    audioControl.style.borderRadius = '50%';
+    audioControl.style.display = 'flex';
+    audioControl.style.justifyContent = 'center';
+    audioControl.style.alignItems = 'center';
+    audioControl.style.fontSize = '20px';
+    audioControl.style.cursor = 'pointer';
+    audioControl.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    audioControl.style.zIndex = '100';
+    audioControl.innerHTML = '🔊';
+    audioControl.title = 'Toggle Background Music';
+    uiContainer.appendChild(audioControl);
+    
+    // Create hidden audio element for BGM
+    const bgmAudio = document.createElement('audio');
+    bgmAudio.id = 'bgmAudio';
+    bgmAudio.loop = true;
+    bgmAudio.volume = 0.5; // Set to 50% volume by default
+    
+    // Use a Creative Commons racing music
+    bgmAudio.src = 'https://freepd.com/music/Fast%20Ace.mp3'; // Fallback to a common racing-like track
+    document.body.appendChild(bgmAudio);
+    
+    // Add event listener to toggle audio
+    let isMuted = false;
+    audioControl.addEventListener('click', () => {
+        if (isMuted) {
+            unmuteBGM(bgmAudio);
+            audioControl.innerHTML = '🔊';
+            isMuted = false;
+        } else {
+            muteBGM(bgmAudio);
+            audioControl.innerHTML = '🔇';
+            isMuted = true;
+        }
+    });
+    
+    // Start BGM
+    playBGM(bgmAudio);
+    
     return {
         lapTimeDisplay,
         terrainInfo,
         speedDisplay,
         checkpointProgress,
         instructions,
-        victoryBanner
+        victoryBanner,
+        bgmAudio,
+        audioControl
     };
 }
 
@@ -217,6 +268,25 @@ export function showVictoryBanner(victoryBanner, lapTime) {
             easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
         }
     );
+    
+    // Find the bgmAudio element if not passed directly
+    const bgmAudio = document.getElementById('bgmAudio');
+    if (bgmAudio) {
+        // Lower BGM volume
+        const currentVolume = bgmAudio.volume;
+        bgmAudio.volume = Math.max(0.1, currentVolume * 0.5);
+        
+        // Play victory sound effect
+        const victorySound = document.createElement('audio');
+        victorySound.src = 'https://freesound.org/data/previews/258/258142_4486188-lq.mp3'; // Victory fanfare sound
+        victorySound.volume = 0.7;
+        victorySound.play();
+        
+        // Return BGM volume to normal after victory sound
+        victorySound.onended = () => {
+            bgmAudio.volume = currentVolume;
+        };
+    }
 }
 
 /**
@@ -225,4 +295,99 @@ export function showVictoryBanner(victoryBanner, lapTime) {
  */
 export function hideVictoryBanner(victoryBanner) {
     victoryBanner.style.display = 'none';
+}
+
+/**
+ * Plays the background music
+ * @param {HTMLAudioElement} bgmAudio - The audio element for background music
+ */
+export function playBGM(bgmAudio) {
+    // Use a promise to handle autoplay policy
+    const playPromise = bgmAudio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Autoplay prevented. User interaction needed to start audio.");
+            // We'll show a "click to play" message if needed
+            const audioMessage = document.createElement('div');
+            audioMessage.id = 'audioMessage';
+            audioMessage.style.position = 'absolute';
+            audioMessage.style.top = '70px';
+            audioMessage.style.right = '20px';
+            audioMessage.style.padding = '5px 10px';
+            audioMessage.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            audioMessage.style.color = 'white';
+            audioMessage.style.borderRadius = '5px';
+            audioMessage.style.fontSize = '12px';
+            audioMessage.textContent = 'Click anywhere to enable music';
+            audioMessage.style.zIndex = '100';
+            document.body.appendChild(audioMessage);
+            
+            // Add event listener to the body to play audio on user interaction
+            const playAudioOnInteraction = () => {
+                bgmAudio.play().then(() => {
+                    if (audioMessage.parentNode) {
+                        audioMessage.parentNode.removeChild(audioMessage);
+                    }
+                }).catch(error => {
+                    console.log("Still can't play audio:", error);
+                });
+                document.body.removeEventListener('click', playAudioOnInteraction);
+            };
+            document.body.addEventListener('click', playAudioOnInteraction);
+        });
+    }
+}
+
+/**
+ * Pauses the background music
+ * @param {HTMLAudioElement} bgmAudio - The audio element for background music
+ */
+export function pauseBGM(bgmAudio) {
+    bgmAudio.pause();
+}
+
+/**
+ * Mutes the background music
+ * @param {HTMLAudioElement} bgmAudio - The audio element for background music
+ */
+export function muteBGM(bgmAudio) {
+    bgmAudio.volume = 0;
+}
+
+/**
+ * Unmutes the background music
+ * @param {HTMLAudioElement} bgmAudio - The audio element for background music
+ */
+export function unmuteBGM(bgmAudio) {
+    bgmAudio.volume = 0.5;
+}
+
+/**
+ * Sets the volume of the background music
+ * @param {HTMLAudioElement} bgmAudio - The audio element for background music
+ * @param {number} volume - Volume level (0 to 1)
+ */
+export function setBGMVolume(bgmAudio, volume) {
+    bgmAudio.volume = Math.max(0, Math.min(1, volume));
+}
+
+/**
+ * Plays a sound effect for race start
+ */
+export function playRaceStartSound() {
+    const startSound = document.createElement('audio');
+    startSound.src = 'https://freesound.org/data/previews/362/362645_6646536-lq.mp3'; // Race start beep
+    startSound.volume = 0.7;
+    startSound.play();
+}
+
+/**
+ * Plays a sound effect for checkpoint crossing
+ */
+export function playCheckpointSound() {
+    const checkpointSound = document.createElement('audio');
+    checkpointSound.src = 'https://freesound.org/data/previews/264/264828_5003039-lq.mp3'; // Checkpoint ping sound
+    checkpointSound.volume = 0.4;
+    checkpointSound.play();
 } 

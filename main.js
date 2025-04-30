@@ -4,7 +4,7 @@
 import { setupCamera, setupSplitScreenCameras } from './camera.js';
 import { createCar, createBlueCar } from './car.js';
 import { createTrack, createEnvironment, isCarOnGrass } from './track.js';
-import { setupUI, updateSpeedDisplay, updateCheckpointProgress, showVictoryBanner, hideVictoryBanner } from './ui.js';
+import { setupUI, updateSpeedDisplay, updateCheckpointProgress, showVictoryBanner, hideVictoryBanner, playBGM, pauseBGM, playRaceStartSound, playCheckpointSound } from './ui.js';
 import { setupControls } from './controls.js';
 import { initializePhysics, updatePhysics } from './physics.js';
 
@@ -131,6 +131,9 @@ const createScene = function() {
                 const currentTime = new Date();
                 const timeElapsed = ((currentTime - gameState.startTime) / 1000).toFixed(2);
                 
+                // Play checkpoint sound
+                playCheckpointSound();
+                
                 if (gameState.lastCheckpointTime) {
                     const sectionTime = ((currentTime - gameState.lastCheckpointTime) / 1000).toFixed(2);
                     gameState.ui.lapTimeDisplay.textContent = `Checkpoint ${i+1} passed! Section: ${sectionTime}s - Total: ${timeElapsed}s`;
@@ -149,6 +152,9 @@ const createScene = function() {
                 gameState.startTime = new Date();
                 gameState.lastCheckpointTime = gameState.startTime;
                 gameState.ui.lapTimeDisplay.textContent = 'Go! Complete the track!';
+                
+                // Play race start sound
+                playRaceStartSound();
             } else if (gameState.startTime && !gameState.finished && gameState.passedCheckpoints.every(cp => cp)) {
                 // Crossing after all checkpoints: finish the race
                 gameState.finished = true;
@@ -245,6 +251,9 @@ function resetRace() {
     updateSpeedDisplay(gameState.ui.speedDisplay, gameState.carSpeed, gameState.blueCarSpeed);
     gameState.ui.terrainInfo.textContent = 'Red Car: Track';
     updateCheckpointProgress(gameState.ui.checkpointProgress, gameState.passedCheckpoints);
+    
+    // Make sure BGM is playing after reset
+    playBGM(gameState.ui.bgmAudio);
     
     // Flash the race info panel to indicate restart
     const raceInfoPanel = document.getElementById('raceInfoPanel');
